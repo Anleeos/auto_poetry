@@ -16,6 +16,7 @@ CONFIG_FILE = "config.json"
 class MainWindow(QMainWindow):
     def __init__(self, data_manager):
         super().__init__()
+        self._drag_pos = None
         self.data_manager = data_manager
         self.today_shown = False
         self.init_ui()
@@ -142,6 +143,7 @@ class MainWindow(QMainWindow):
         shadow.setColor(QColor(0, 0, 0, 255))
         shadow.setOffset(0, 0)
         self.btn_close.setGraphicsEffect(shadow)
+        self.btn_close.clicked.connect(self.hide)
 
         top_bar.addWidget(self.combo_category)
         top_bar.addStretch()
@@ -189,7 +191,24 @@ class MainWindow(QMainWindow):
                 self.show()
                 self.raise_()
                 self.activateWindow()
+    
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            # 记录点击时，鼠标相对于窗口左上角的位置
+            self._drag_pos = event.globalPos() - self.frameGeometry().topLeft()
+            event.accept()
 
+    def mouseMoveEvent(self, event):
+        if self._drag_pos is not None and event.buttons() & Qt.LeftButton:
+            # 根据鼠标当前位置减去偏移计算窗口新的左上角位置，实现拖动
+            self.move(event.globalPos() - self._drag_pos)
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._drag_pos = None
+            event.accept()
+    
     def closeEvent(self, event):
         event.ignore()
         self.hide()
