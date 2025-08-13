@@ -36,8 +36,6 @@ class MainWindow(QMainWindow):
 
     def init_ui(self):
         self.setWindowTitle("每日古诗词")
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        self.setAttribute(Qt.WA_TranslucentBackground)
         self.resize(600, 400)
 
         self.combo_category = QComboBox()
@@ -45,14 +43,8 @@ class MainWindow(QMainWindow):
         cats = sorted(self.data_manager.poems.keys())
         self.combo_category.addItems(cats)
 
-        self.poem_text = QLabel(self)
-        self.poem_text.setStyleSheet("""
-                    color: rgba(255, 255, 255, 200);
-                    font-size: 24px;
-                    font-weight: bold;
-                """)
-        self.poem_text.setAlignment(Qt.AlignCenter)
-        self.setCentralWidget(self.poem_text)
+        self.poem_text = QTextEdit()
+        self.poem_text.setReadOnly(True)
 
         self.btn_today = QPushButton("今日诗词")
         self.btn_next = QPushButton("下一首")
