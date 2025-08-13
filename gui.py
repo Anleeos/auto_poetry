@@ -1,7 +1,8 @@
 import sys
 from PyQt5.QtWidgets import (QMainWindow, QApplication, QPushButton, QComboBox, QTextEdit,
-                             QVBoxLayout, QWidget, QSystemTrayIcon, QMenu, QAction, QLabel)
-from PyQt5.QtGui import QIcon
+                             QVBoxLayout, QWidget, QSystemTrayIcon, QMenu, QAction, QLabel, QGraphicsDropShadowEffect,
+                             QHBoxLayout)
+from PyQt5.QtGui import QIcon, QColor
 from PyQt5.QtCore import QTimer, Qt
 
 import utils
@@ -36,32 +37,124 @@ class MainWindow(QMainWindow):
 
     def init_ui(self):
         self.setWindowTitle("每日古诗词")
-        self.resize(600, 400)
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.resize(600, 350)
+
+        # 主容器，半透明背景，圆角
+        self.container = QWidget(self)
+        self.container.setStyleSheet("""
+                    background-color: rgba(0, 0, 0, 180);
+                    border-radius: 12px;
+                """)
+        self.setCentralWidget(self.container)
+
+        main_layout = QVBoxLayout(self.container)
+        main_layout.setContentsMargins(15, 15, 15, 15)
+        main_layout.setSpacing(10)
+
+        top_bar = QHBoxLayout()
+        top_bar.setSpacing(10)
 
         self.combo_category = QComboBox()
         self.combo_category.addItem("全部")
         cats = sorted(self.data_manager.poems.keys())
         self.combo_category.addItems(cats)
+        self.combo_category.setStyleSheet("""
+                           QComboBox {
+                               background: transparent;
+                               border: 1px solid rgba(255,255,255,0.6);
+                               border-radius: 5px;
+                               padding: 5px 10px;
+                               color: rgba(255,255,255,0.9);
+                               font-weight: bold;
+                               font-size: 14px;
+                           }
+                           QComboBox::drop-down {
+                               border: none;
+                           }
+                           QComboBox QAbstractItemView {
+                               background-color: rgba(0, 0, 0, 220);
+                               color: white;
+                               selection-background-color: rgba(255, 255, 255, 50);
+                           }
+                       """)
 
-        self.poem_text = QTextEdit()
-        self.poem_text.setReadOnly(True)
+        self.poem_text = QLabel(self)
+        self.poem_text.setStyleSheet("color: white; font-size: 20px; font-weight: bold;")
+        self.poem_text.setAlignment(Qt.AlignCenter)
+
+        self.label = self.poem_text
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(5)
+        shadow.setColor(QColor(0, 0, 0, 160))  # 半透明黑色阴影
+        shadow.setOffset(1, 1)
+        self.label.setGraphicsEffect(shadow)
 
         self.btn_today = QPushButton("今日诗词")
         self.btn_next = QPushButton("下一首")
+
+        # 按钮样式，透明底，白字带阴影
+        for btn in (self.btn_today, self.btn_next):
+            btn.setStyleSheet("""
+                        QPushButton {
+                            background-color: rgba(255, 255, 255, 50);
+                            border: none;
+                            color: white;
+                            font-weight: bold;
+                            font-size: 16px;
+                            padding: 8px 20px;
+                            border-radius: 6px;
+                        }
+                        QPushButton:hover {
+                            background-color: rgba(255, 255, 255, 100);
+                        }
+                    """)
+            # 按钮描边阴影
+            b_shadow = QGraphicsDropShadowEffect()
+            b_shadow.setBlurRadius(1)
+            b_shadow.setColor(QColor(0, 0, 0, 160))
+            b_shadow.setOffset(0, 0)
+            btn.setGraphicsEffect(b_shadow)
 
         self.btn_today.clicked.connect(self.show_today_poem)
         self.btn_next.clicked.connect(self.show_next_poem)
         self.combo_category.currentTextChanged.connect(self.category_changed)
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.combo_category)
-        layout.addWidget(self.poem_text)
-        layout.addWidget(self.btn_today)
-        layout.addWidget(self.btn_next)
+        # 关闭按钮
+        self.btn_close = QPushButton("×")
+        self.btn_close.setFixedSize(28, 28)
+        self.btn_close.setStyleSheet("""
+                   QPushButton {
+                       background: transparent;
+                       color: white;
+                       font-weight: bold;
+                       font-size: 20px;
+                       border: none;
+                   }
+                   QPushButton:hover {
+                       color: red;
+                   }
+               """)
+        # 给关闭按钮加描边（阴影）模拟
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(0)
+        shadow.setColor(QColor(0, 0, 0, 255))
+        shadow.setOffset(0, 0)
+        self.btn_close.setGraphicsEffect(shadow)
 
-        container = QWidget()
-        container.setLayout(layout)
-        self.setCentralWidget(container)
+        top_bar.addWidget(self.combo_category)
+        top_bar.addStretch()
+        top_bar.addWidget(self.btn_close)
+
+        main_layout.addLayout(top_bar)
+        main_layout.addWidget(self.label, stretch=1)
+
+        btn_layout = QHBoxLayout()
+        btn_layout.setSpacing(15)
+        btn_layout.addWidget(self.btn_today)
+        btn_layout.addWidget(self.btn_next)
+        main_layout.addLayout(btn_layout)
 
     def init_tray(self):
         if not QIcon.hasThemeIcon(ICON_PATH):
