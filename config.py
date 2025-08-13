@@ -1,0 +1,6 @@
+DATA_DIR = "data"
+GITHUB_ZIP_URL = "https://github.com/chinese-poetry/chinese-poetry/archive/refs/heads/master.zip"
+ICON_PATH = "icon.png"
+HISTORY_FILE = "history.txt"
+TODAY_CACHE_FILE = "today_poem_cache.json"
+POPUP_TIME = "09:00"
